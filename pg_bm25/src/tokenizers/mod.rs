@@ -57,12 +57,10 @@ pub fn create_tokenizer_manager(option_map: &ParadeOptionMap) -> TokenizerManage
                 max_gram,
                 prefix_only,
             } => Some(
-                TextAnalyzer::builder(
-                    NgramTokenizer::new(min_gram, max_gram, prefix_only).unwrap(),
-                )
-                .filter(RemoveLongFilter::limit(DEFAULT_REMOVE_TOKEN_LENGTH))
-                .filter(LowerCaser)
-                .build(),
+                TextAnalyzer::builder(NgramTokenizer::all_ngrams(min_gram, max_gram).unwrap())
+                    .filter(RemoveLongFilter::limit(DEFAULT_REMOVE_TOKEN_LENGTH))
+                    .filter(LowerCaser)
+                    .build(),
             ),
             ParadeTokenizer::ChineseLindera => Some(
                 TextAnalyzer::builder(LinderaChineseTokenizer::default())

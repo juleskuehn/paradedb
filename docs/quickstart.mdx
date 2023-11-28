@@ -104,9 +104,54 @@ WHERE mock_items @@@ 'description:keyboard OR category:electronics';
 ```
 </Accordion>
 
-You may have noticed the above SQL query makes use of
-the custom `@@@` operator and of [ParadeQL, our mini query language](search/bm25). This mini language supports phrase queries,
-set queries, boolean queries and more.
+Next, let's see how ParadeDB handles a search query like "bluetooth speaker", which
+
+```sql
+SELECT description, rating, category
+FROM mock_items
+WHERE mock_items @@@ 'description:"bluetooth speaker"~1';
+```
+
+<Accordion title="Expected Response">
+``` csv
+        description        | rating |  category
+---------------------------+--------+-------------
+ Bluetooth-enabled speaker |      3 | Electronics
+(1 row)
+```
+</Accordion>
+
+Notice that we must wrap phrases with whitespace in double quotes and our use of the `~1` slop operator,
+which tells the search engine to return matches even if they are separated by `1` word.
+
+Finally, let's implement typo tolerance using the `ngrams` tokenizer. To do this, we'll need to drop and
+recreate our index:
+
+``` sql
+DROP INDEX idx_mock_items;
+
+CREATE INDEX idx_mock_items
+ON mock_items
+USING bm25 ((mock_items.*))
+WITH (
+  text_fields='{"description": {tokenizer: {type: "ngram", min_gram: 3, max_gram: 3, prefix_only: true}}, "category": {}}'
+);
+
+SELECT description, rating, category
+FROM mock_items
+WHERE mock_items @@@ 'description:bluetoohth';
+```
+
+<Accordion title="Expected Response">
+``` csv
+        description        | rating |  category
+---------------------------+--------+-------------
+ Bluetooth-enabled speaker |      3 | Electronics
+(1 row)
+```
+</Accordion>
+
+This quickstart covers only a small subset of the queries you can run with [ParadeQL, our mini query language](search/bm25).
 
 ## Similarity Search
 
